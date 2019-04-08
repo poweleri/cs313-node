@@ -93,7 +93,7 @@ function getParkingLots(building, handleRequest){
 			if (err){
 				throw err;
 			}
-			handleRequest(res.row);
+			handleRequest(res.rows);
 		});
 	}
 	else {
@@ -101,7 +101,7 @@ function getParkingLots(building, handleRequest){
 			if (err){
 				throw err;
 			}
-			handleRequest(res.row);
+			handleRequest(res.rows);
 		});		
 	}
 }
@@ -112,7 +112,7 @@ function getComments(parkingLot, handleRequest){
 			  	if (err){
 			  		throw err;
 			  	}
-			  	handleRequest(res.row);
+			  	handleRequest(res.rows);
 			  });
 }
 
@@ -122,7 +122,7 @@ function addRating(parkingLot, comment, rating, user, handleRequest){
 			  	if (err){
 			  		throw err;
 			  	}
-			  	handleRequest(res.row);
+			  	handleRequest(res.rows);
 			  });
 }
 
@@ -132,8 +132,8 @@ function login(userName, password, handleRequest){
 			  	if(err){
 			  		throw err;
 			  	}
-			  	if(passwordHash.verify(password, res.row[0].password))
-			  		handleRequest(res.row[0].usr_id);
+			  	if(passwordHash.verify(password, res.rows[0].password))
+			  		handleRequest(res.rows[0].usr_id);
 			  	else
 			  		handleRequest(-1);
 			  });
