@@ -51,7 +51,7 @@ function getParkingLots(building){
 	var xhttp = new XMLHttpRequest();
 	xhttp.onreadystatechange = function() {
 		if (this.readyState == 4 && this.status == 200) {
-			document.getElementById("ParkingLots").innerhtml = "";
+			clearChildren(document.getElementById("ParkingLots"));
 			var rows = JSON.parse(xhttp.responseText);
 			for (var i = 0; i < rows.length; i++) {
 				createParkingLot(rows[i]);
@@ -97,7 +97,7 @@ function getComments(lotId){
 	var xhttp = new XMLHttpRequest();
 	xhttp.onreadystatechange = function() {
 		if (this.readyState == 4 && this.status == 200) {
-			document.getElementById("LotComments-" + lotId).innerhtml = "";
+			clearChildren(document.getElementById("LotComments-" + lotId));
 			var rows = JSON.parse(xhttp.responseText);
 			for (var i = 0; i < rows.length; i++) {
 				createComments(rows[i], lotId);
@@ -259,6 +259,12 @@ function logout(){
 	userId = -1;
 	document.getElementById("logoutButton").style.display = "none";
 	document.getElementById("loginButton").style.display = "block";
+}
+
+function clearChildren(thing){
+	while (thing.firstChild) {
+	    thing.removeChild(thing.firstChild);
+	}
 }
 
 window.onload = getBuildings();
