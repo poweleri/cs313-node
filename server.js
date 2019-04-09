@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 5000;
@@ -10,12 +11,21 @@ const passwordHash = require('password-hash');
 
 
 //app.set("views", "views");
-//app.set("view engine", "ejs");
+// app.set("view engine", "ejs");
+app.use(express.static("public"));
 
 app.listen(port, function() {
    console.log(`listening on port: ${port}`);
 });
 
+app.get("/getBuildings", function(req, res){
+	console.log(`Getting Buildings`);
+	getBuildings(function(rows){
+		console.log(`DB query complete`);
+		res.setHeader('Content-Type', 'application/json');
+      	res.end(JSON.stringify(rows));
+	});
+});
 
 app.get("/getParkingLots", function(req, res){
 	console.log(`Getting parking lots`);
@@ -38,10 +48,10 @@ app.get("/getComments", function(req, res){
 
 app.post("/addRating", function(req, res){
 	console.log(`Add Rating to Parking Lot`);
-	const parkingLot = req.query.parkingLog;
-	const comment = req.query.comment;
-	const rating = req.query.rating;
-	const user = req.query.userId;
+	const parkingLot = req.body.lotId;
+	const comment = req.body.comment;
+	const rating = req.body.rating;
+	const user = req.body.userId;
 	addRating(parkingLot, comment, rating, user, function(rows) {
 		res.setHeader('Content-Type', 'application/json');
 		res.end(JSON.stringify(rows));
@@ -50,10 +60,10 @@ app.post("/addRating", function(req, res){
 
 app.post("/login", function(req, res){
 	console.log(`Logging in`);
-	const username = req.query.username;
-	const password = req.query.password;
+	const username = req.body.username;
+	const password = req.body.password;
 	login(username, password, function(value){
-		if (value == -1)
+		if (value.usr_id == -1)
 			console.log(`Error in logging in.`);
 		 else 
 			console.log(`Successful login`);
@@ -65,12 +75,12 @@ app.post("/login", function(req, res){
 
 app.post("/createUser", function(req, res){
 	console.log(`Creating user`);
-	const username = req.query.username;
-	const password = req.query.password;
-	if (password !== req.query.conf) {
+	const username = req.body.username;
+	const password = req.body.password;
+	if (password !== req.body.conf) {
 		console.log(`ERROR: Passwords do not match`);
 		res.setHeader('Content-Type', 'application/json');
-		res.end(JSON.stringify(-1));
+		res.end(JSON.stringify({"res":-1}));
 	} else {
 		createUser(username, password, function(value) {
 			console.log(`User Created Successfully`);
@@ -83,6 +93,15 @@ app.post("/createUser", function(req, res){
 
 
 // Model
+
+function getBuildings(handleRequest){
+	pool.query("SELECT b.building_id as id, b.description FROM building b ORDER BY id", [], (err, res) => {
+		if (err){
+			throw err;
+		}
+		handleRequest(res.rows);
+	});
+}
 
 function getParkingLots(building, handleRequest){
 	var queryBuilding = "SELECT pkl.parking_lot_id as id, pkl.description as desc, COALESCE(NULLIF(avg(lc.rating), NULL), '0') as average FROM parking_lot pkl LEFT JOIN lot_comment lc ON pkl.parking_lot_id = lc.parking_lot_id INNER JOIN parking_lot_building_join pklbj ON pklbj.parking_lot_id = pkl.parking_lot_id AND  pklbj.building_id IN ($1) GROUP BY id";
@@ -107,7 +126,7 @@ function getParkingLots(building, handleRequest){
 }
 
 function getComments(parkingLot, handleRequest){
-	pool.query("SELECT conditions, description FROM parking_lot WHERE parking_lot_id = $1"
+	pool.query("SELECT lc.lot_comment_info as note, lc.rating, u.username FROM lot_comment lc INNER JOIN usr u ON lc.usr_id=u.usr_id AND lc.parking_lot_id = $1"
 			  , [parkingLot], (err, res) => {
 			  	if (err){
 			  		throw err;
@@ -133,9 +152,9 @@ function login(userName, password, handleRequest){
 			  		throw err;
 			  	}
 			  	if(passwordHash.verify(password, res.rows[0].password))
-			  		handleRequest(res.rows[0].usr_id);
+			  		handleRequest(res.rows[0]);
 			  	else
-			  		handleRequest(-1);
+			  		handleRequest({"username":"", "usr_id":"-1", "password":""});
 			  });
 }
 
@@ -146,6 +165,6 @@ function createUser(userName, password, handleRequest) {
 			  	if (err){
 			  		throw err;
 			  	}
-			  	handleRequest(1);
+			  	handleRequest({"res":1});
 			  });
 }
